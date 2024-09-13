@@ -1,5 +1,6 @@
 package cn.fyzzz.spider.flow.service;
 
+import cn.hutool.core.io.FileUtil;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.BoundingBox;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -36,12 +37,14 @@ public class JueJinJob extends AbstractJob{
     @Value("${juejin.password:1111111}")
     private String password;
     @Value("${juejin.url:https://juejin.cn/user/center/signin}")
-    private String url = "https://juejin.cn/user/center/signin";
+    private String url;
+    @Value("${juejin.headless:true}")
+    private Boolean headless;
 
     public static void main(String[] args) {
         final JueJinJob jueJinJob = new JueJinJob();
-        jueJinJob.username = "111111111";
-        jueJinJob.password = "111111111";
+        jueJinJob.username = "1111111111";
+        jueJinJob.password = "1111111111";
         jueJinJob.signInJob();
         System.out.println(System.getProperty("user.dir"));
     }
@@ -49,11 +52,12 @@ public class JueJinJob extends AbstractJob{
     @XxlJob("juejinSignIn")
     public void signInJob() {
         final BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions();
-        launchOptions.setHeadless(false);
+        launchOptions.setHeadless(headless);
         launchOptions.setSlowMo(50);
         try (Playwright playwright = Playwright.create();
              Browser browser = playwright.webkit().launch(launchOptions)) {
             Page page = browser.newPage();
+            page.setViewportSize(1920, 1080);
             page.navigate(url);
             logInfo("跳转到{}", url);
             final Locator openLogin = page.locator(".login-button");
@@ -74,21 +78,40 @@ public class JueJinJob extends AbstractJob{
             loginButton.click();
             logInfo("点击登录");
             crack(page);
-            TimeUnit.SECONDS.sleep(10);
+            page.waitForTimeout(3000);
+            final Locator signInButton = page.locator("button.signin.btn");
+            try {
+                signInButton.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                signInButton.click();
+                logInfo("签到成功");
+                page.waitForTimeout(3000);
+            } catch (Exception e) {
+                try {
+                    page.locator("button.signedin.btn").waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                    logInfo("今日已签到");
+                } catch (Exception ex) {
+                    logInfo("异常了, {}", ex.getMessage());
+                    throw new RuntimeException(ex);
+                }
+            }
+            final Locator span = page.locator("div.figures div.large-card span.figure");
+            final String value = span.textContent();
+            logInfo("当前矿石数：{}", value);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void crack(Page page) throws InterruptedException {
-        final int start = page.frames().size();
-        logInfo("开始破解验证码，当前iframe数量：{}", start);
+        logInfo("开始破解验证码");
         for (int i = 0; i < 10; i++) {
             FrameLocator frameLocator = page.frameLocator("iframe");
             final Locator bigImageLocator = frameLocator.locator("#captcha_verify_image");
             final Locator smallImageLocator = frameLocator.locator("#captcha-verify_img_slide");
-            bigImageLocator.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5000));
-            if (!bigImageLocator.isVisible()) {
+            final BoundingBox bigImageBox;
+            try {
+                bigImageBox = bigImageLocator.boundingBox(new Locator.BoundingBoxOptions().setTimeout(5000));
+            } catch (TimeoutError e) {
                 logInfo("第{}次破解成功", i);
                 return;
             }
@@ -97,7 +120,6 @@ public class JueJinJob extends AbstractJob{
             final String smallImageUrl = smallImageLocator.getAttribute("src");
             final File bigImage = download(bigImageUrl);
             final File smallImage = download(smallImageUrl);
-            final BoundingBox bigImageBox = bigImageLocator.boundingBox();
             final BoundingBox smallImageBox = smallImageLocator.boundingBox();
             final double smallY = smallImageBox.height;
             final double startY = Math.abs(bigImageBox.y - smallImageBox.y);
@@ -105,22 +127,23 @@ public class JueJinJob extends AbstractJob{
             logInfo("计算出右移距离：{}", distance);
             // 获取目标元素的定位器
             Locator targetElement = frameLocator.locator(".captcha-slider-icon");
+            targetElement.waitFor();
             // 获取鼠标对象
             Mouse mouse = page.mouse();
             // 移动鼠标到目标元素上
             mouse.move(targetElement.boundingBox().x, targetElement.boundingBox().y);
-            TimeUnit.MILLISECONDS.sleep(300);
+            page.waitForTimeout(300);
             // 长按鼠标
             mouse.down();
-            TimeUnit.MILLISECONDS.sleep(300);
+            page.waitForTimeout(300);
             // 向右移动一段距离
             mouse.move(targetElement.boundingBox().x + distance, targetElement.boundingBox().y, new Mouse.MoveOptions().setSteps(20));
 
-            TimeUnit.MILLISECONDS.sleep(300);
+            page.waitForTimeout(300);
             // 释放鼠标
             mouse.up();
-            TimeUnit.MILLISECONDS.sleep(1000);
         }
+        throw new RuntimeException("破解验证码失败");
     }
 
 
@@ -156,6 +179,9 @@ public class JueJinJob extends AbstractJob{
             opencv_imgcodecs.imwrite(System.currentTimeMillis() + ".jpeg", image);
 
             return (int) Math.round(minPt.x() * percent);
+        } finally {
+            FileUtil.del(big);
+            FileUtil.del(small);
         }
     }
 

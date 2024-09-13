@@ -1,7 +1,9 @@
 package cn.fyzzz.spider.flow.service;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import com.xxl.job.core.context.XxlJobHelper;
 import groovy.util.logging.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,9 @@ public abstract class AbstractJob {
 
     public void logInfo(String info, Object... vars) {
         final Logger logger = loggerMap.computeIfAbsent(getClass(), LoggerFactory::getLogger);
-        logger.info(info, vars);
+        final String message = StrUtil.format(info, vars);
+        logger.info(message);
+        XxlJobHelper.log(message);
     }
 
     public File download(String url) {
