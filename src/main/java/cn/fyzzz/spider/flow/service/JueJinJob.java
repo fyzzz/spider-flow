@@ -5,6 +5,8 @@ import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.BoundingBox;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.bytedeco.javacpp.DoublePointer;
 import org.bytedeco.opencv.global.opencv_core;
 import org.bytedeco.opencv.global.opencv_imgcodecs;
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +32,9 @@ import static cn.fyzzz.spider.flow.common.util.ImageUtil.gray;
  * @author fyzzz
  * @date 2024/9/12 14:20
  */
+@Data
 @Service
+@EqualsAndHashCode(callSuper = true)
 public class JueJinJob extends AbstractJob{
 
     @Value("${juejin.username:1111111}")
@@ -41,25 +46,19 @@ public class JueJinJob extends AbstractJob{
     @Value("${juejin.headless:true}")
     private Boolean headless;
 
-    public static void main(String[] args) {
-        final JueJinJob jueJinJob = new JueJinJob();
-        jueJinJob.username = "1111111111";
-        jueJinJob.password = "1111111111";
-        jueJinJob.signInJob();
-        System.out.println(System.getProperty("user.dir"));
-    }
-
     @XxlJob("juejinSignIn")
     public void signInJob() {
         final BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions();
         launchOptions.setHeadless(headless);
         launchOptions.setSlowMo(50);
+        long serial = System.currentTimeMillis();
         try (Playwright playwright = Playwright.create();
              Browser browser = playwright.webkit().launch(launchOptions)) {
             Page page = browser.newPage();
             page.setViewportSize(1920, 1080);
             page.navigate(url);
             logInfo("跳转到{}", url);
+            page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"goto.png")));
             final Locator openLogin = page.locator(".login-button");
             // 等待元素可见，超时时间设为 5000 毫秒
             openLogin.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5000));
@@ -79,6 +78,7 @@ public class JueJinJob extends AbstractJob{
             logInfo("点击登录");
             crack(page);
             page.waitForTimeout(3000);
+            page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"afterCrack.png")));
             final Locator signInButton = page.locator("button.signin.btn");
             try {
                 signInButton.waitFor(new Locator.WaitForOptions().setTimeout(3000));
@@ -86,10 +86,12 @@ public class JueJinJob extends AbstractJob{
                 logInfo("签到成功");
                 page.waitForTimeout(3000);
             } catch (Exception e) {
+                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"e1.png")));
                 try {
                     page.locator("button.signedin.btn").waitFor(new Locator.WaitForOptions().setTimeout(3000));
                     logInfo("今日已签到");
                 } catch (Exception ex) {
+                    page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"e2.png")));
                     logInfo("异常了, {}", ex.getMessage());
                     throw new RuntimeException(ex);
                 }
@@ -175,8 +177,8 @@ public class JueJinJob extends AbstractJob{
 
             // 在最相似的位置（这里是 minPt）绘制一个矩形
             opencv_imgproc.rectangle(image, new Rect(minPt.x(), minPt.y() + (int) startY, targetGray.cols(), targetRows), new Scalar(0, 255, 0, 0.0));
-            opencv_imgcodecs.imwrite(System.currentTimeMillis() + "_search.jpeg", searchAres);
-            opencv_imgcodecs.imwrite(System.currentTimeMillis() + ".jpeg", image);
+//            opencv_imgcodecs.imwrite(System.currentTimeMillis() + "_search.jpeg", searchAres);
+//            opencv_imgcodecs.imwrite(System.currentTimeMillis() + ".jpeg", image);
 
             return (int) Math.round(minPt.x() * percent);
         } finally {

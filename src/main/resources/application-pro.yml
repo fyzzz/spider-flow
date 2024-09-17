@@ -12,9 +12,9 @@ xxl:
       logretentiondays: 30
 
 app:
-  id:
+  id: spider-flow
 apollo:
-  config-service:
+  config-service: http://192.168.5.131:9980
   bootstrap:
     enabled: true
     eagerLoad:
