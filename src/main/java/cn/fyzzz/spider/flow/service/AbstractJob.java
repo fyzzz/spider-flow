@@ -33,6 +33,11 @@ public abstract class AbstractJob {
         XxlJobHelper.log(message);
     }
 
+    public void logError(String info, Throwable e, Object... vars) {
+        logInfo(info, vars);
+        XxlJobHelper.log(e);
+    }
+
     public File download(String url) {
         final String uuid = UUID.randomUUID().toString();
         File file = new File(userDir, uuid);

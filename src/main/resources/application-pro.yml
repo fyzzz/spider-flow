@@ -1,8 +1,8 @@
 xxl:
   job:
-    accessToken: ${xxl.job.accessToken}
+    accessToken: xxx
     admin:
-      address: ${xxl.job.admin.address}
+      addresses: xxx
     executor:
       appname: spider-flow-executor-pro
       address:

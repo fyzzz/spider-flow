@@ -1,9 +1,15 @@
 package cn.fyzzz.spider.flow.service;
 
+import cn.fyzzz.spider.flow.pojo.JuejinParam;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.BoundingBox;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,7 +33,6 @@ import static cn.fyzzz.spider.flow.common.util.ImageUtil.gaussianBlur;
 import static cn.fyzzz.spider.flow.common.util.ImageUtil.gray;
 
 /**
- * todo 描述
  *
  * @author fyzzz
  * @date 2024/9/12 14:20
@@ -38,16 +43,41 @@ import static cn.fyzzz.spider.flow.common.util.ImageUtil.gray;
 public class JueJinJob extends AbstractJob{
 
     @Value("${juejin.username:1111111}")
-    private String username;
+    private String defaultUsername;
     @Value("${juejin.password:1111111}")
-    private String password;
+    private String defaultPassword;
     @Value("${juejin.url:https://juejin.cn/user/center/signin}")
     private String url;
     @Value("${juejin.headless:true}")
     private Boolean headless;
+    @Value("${juejin.debug:false}")
+    private Boolean debug;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @XxlJob("juejinSignIn")
-    public void signInJob() {
+    public void signInJob(){
+        // 设置参数
+        String jobParam = XxlJobHelper.getJobParam();
+        logInfo("任务参数：{}", jobParam);
+        String username = null;
+        String password = null;
+        if (StrUtil.isNotBlank(jobParam)) {
+            try {
+                JuejinParam juejinParam = objectMapper.readValue(jobParam, JuejinParam.class);
+                username = juejinParam.getUsername();
+                password = juejinParam.getPassword();
+            } catch (JsonProcessingException e) {
+                logError("任务参数解析异常，使用默认参数。", e);
+            }
+        }
+        if (StrUtil.isEmpty(username)) {
+            username = defaultUsername;
+        }
+        if (StrUtil.isEmpty(password)) {
+            password = defaultPassword;
+        }
+        logInfo("username: {}", username);
+        logInfo("password: {}", password);
         final BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions();
         launchOptions.setHeadless(headless);
         launchOptions.setSlowMo(50);
@@ -58,7 +88,9 @@ public class JueJinJob extends AbstractJob{
             page.setViewportSize(1920, 1080);
             page.navigate(url);
             logInfo("跳转到{}", url);
-            page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"goto.png")));
+            if (debug) {
+                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"goto.png")));
+            }
             final Locator openLogin = page.locator(".login-button");
             // 等待元素可见，超时时间设为 5000 毫秒
             openLogin.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5000));
@@ -78,7 +110,9 @@ public class JueJinJob extends AbstractJob{
             logInfo("点击登录");
             crack(page);
             page.waitForTimeout(3000);
-            page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"afterCrack.png")));
+            if (debug) {
+                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"afterCrack.png")));
+            }
             final Locator signInButton = page.locator("button.signin.btn");
             try {
                 signInButton.waitFor(new Locator.WaitForOptions().setTimeout(3000));
@@ -86,12 +120,18 @@ public class JueJinJob extends AbstractJob{
                 logInfo("签到成功");
                 page.waitForTimeout(3000);
             } catch (Exception e) {
-                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"e1.png")));
+                if (debug) {
+                    page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"e1.png")));
+                }
                 try {
-                    page.locator("button.signedin.btn").waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                    if (debug) {
+                        page.locator("button.signedin.btn").waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                    }
                     logInfo("今日已签到");
                 } catch (Exception ex) {
-                    page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"e2.png")));
+                    if (debug) {
+                        page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get( serial+"e2.png")));
+                    }
                     logInfo("异常了, {}", ex.getMessage());
                     throw new RuntimeException(ex);
                 }
@@ -176,7 +216,7 @@ public class JueJinJob extends AbstractJob{
             opencv_core.minMaxLoc(result, minVal, maxVal, minPt, maxPt, null);
 
             // 在最相似的位置（这里是 minPt）绘制一个矩形
-            opencv_imgproc.rectangle(image, new Rect(minPt.x(), minPt.y() + (int) startY, targetGray.cols(), targetRows), new Scalar(0, 255, 0, 0.0));
+//            opencv_imgproc.rectangle(image, new Rect(minPt.x(), minPt.y() + (int) startY, targetGray.cols(), targetRows), new Scalar(0, 255, 0, 0.0));
 //            opencv_imgcodecs.imwrite(System.currentTimeMillis() + "_search.jpeg", searchAres);
 //            opencv_imgcodecs.imwrite(System.currentTimeMillis() + ".jpeg", image);
 
