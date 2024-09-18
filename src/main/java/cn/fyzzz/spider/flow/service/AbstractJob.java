@@ -1,8 +1,8 @@
 package cn.fyzzz.spider.flow.service;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import com.microsoft.playwright.Locator;
 import com.xxl.job.core.context.XxlJobHelper;
 import groovy.util.logging.Slf4j;
 import org.slf4j.Logger;
@@ -14,10 +14,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * todo 描述
  *
  * @author fyzzz
- * @date 2024/9/12 17:34
+ * 2024/9/12 17:34
  */
 @Slf4j
 public abstract class AbstractJob {
@@ -43,6 +42,15 @@ public abstract class AbstractJob {
         File file = new File(userDir, uuid);
         HttpUtil.downloadFileFromUrl(url, file);
         return file;
+    }
+
+    public boolean isVisible(Locator locator) {
+        try {
+            locator.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

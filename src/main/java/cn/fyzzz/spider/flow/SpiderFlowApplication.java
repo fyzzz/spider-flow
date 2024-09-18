@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 启动类
  *
  * @author fyzzz
- * @date 2024/9/12 11:04
+ * 2024/9/12 11:04
  */
 @SpringBootApplication
 public class SpiderFlowApplication {

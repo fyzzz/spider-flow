@@ -4,7 +4,6 @@ import cn.fyzzz.spider.flow.pojo.JuejinParam;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.BoundingBox;
@@ -20,14 +19,11 @@ import org.bytedeco.opencv.global.opencv_imgproc;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_core.Point;
 import org.bytedeco.opencv.opencv_core.Rect;
-import org.bytedeco.opencv.opencv_core.Scalar;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static cn.fyzzz.spider.flow.common.util.ImageUtil.gaussianBlur;
 import static cn.fyzzz.spider.flow.common.util.ImageUtil.gray;
@@ -35,7 +31,7 @@ import static cn.fyzzz.spider.flow.common.util.ImageUtil.gray;
 /**
  *
  * @author fyzzz
- * @date 2024/9/12 14:20
+ * 2024/9/12 14:20
  */
 @Data
 @Service
