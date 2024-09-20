@@ -48,15 +48,21 @@ public class LiandiJob extends AbstractJob{
             logInfo("点击登录");
             page.navigate("https://ld246.com/activity/checkin");
             logInfo("去签到页面：{}", "https://ld246.com/activity/checkin");
-            final Locator result = page.locator("div.vditor-reset:nth-child(2)");
-//            final Locator result = page.locator("body > div.main.fn__flex-1 > div > div.content > div:nth-child(1) > div.module__body.ft__center.vditor-reset > div.vditor-reset");
+            Locator parent = page.locator("div.vditor-reset:nth-child(2)");
+            Locator signIn = parent.locator("a.btn.green");
+            if (isVisible(signIn)) {
+                signIn.click();
+                logInfo("签到成功");
+                page.waitForTimeout(3000);
+            } else {
+                logInfo("今日已签到");
+            }
+            final Locator result = parent.locator("div.vditor-reset");
             logInfo(result.textContent());
             final Locator balance = page.locator("a.btn");
             logInfo(balance.textContent());
-            TimeUnit.SECONDS.sleep(30);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+//            TimeUnit.SECONDS.sleep(30);
         }
     }
-    
+
 }
