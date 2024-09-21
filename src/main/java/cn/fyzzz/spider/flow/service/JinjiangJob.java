@@ -52,7 +52,7 @@ public class JinjiangJob extends AbstractJob{
     private Boolean debug;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @XxlJob("juejinSignIn")
+    @XxlJob("jingjiangSignIn")
     public void signInJob(){
         // 设置参数
         String jobParam = XxlJobHelper.getJobParam();
