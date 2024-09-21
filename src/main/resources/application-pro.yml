@@ -20,3 +20,25 @@ apollo:
     eagerLoad:
       enabled: true
     namespaces: application
+
+common:
+  email: xxx
+  phone: xxx
+  password: xxx
+
+ikuuu:
+  username: ${common.email}
+  password: ${common.password}
+
+jingjiang:
+  username: ${common.phone}
+  password: ${common.password}
+
+juejin:
+  username: ${common.phone}
+  password: ${common.password}
+
+liandi:
+  username: ${common.phone}
+  password: ${common.password}
+
