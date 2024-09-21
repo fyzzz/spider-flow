@@ -30,7 +30,7 @@ ikuuu:
   username: ${common.email}
   password: ${common.password}
 
-jingjiang:
+jinjiang:
   username: ${common.phone}
   password: ${common.password}
 
@@ -39,6 +39,10 @@ juejin:
   password: ${common.password}
 
 liandi:
+  username: ${common.phone}
+  password: ${common.password}
+
+csdn:
   username: ${common.phone}
   password: ${common.password}
 

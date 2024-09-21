@@ -40,19 +40,19 @@ import static cn.fyzzz.spider.flow.common.util.ImageUtil.gray;
 @EqualsAndHashCode(callSuper = true)
 public class JinjiangJob extends AbstractJob{
 
-    @Value("${jingjiang.username:1111111}")
+    @Value("${jinjiang.username:1111111}")
     private String defaultUsername;
-    @Value("${jingjiang.password:1111111}")
+    @Value("${jinjiang.password:1111111}")
     private String defaultPassword;
-    @Value("${juejin.url:https://my.jjwxc.net/login.php}")
+    @Value("${jinjiang.url:https://my.jjwxc.net/login.php}")
     private String url;
-    @Value("${juejin.headless:true}")
+    @Value("${jinjiang.headless:true}")
     private Boolean headless;
-    @Value("${juejin.debug:false}")
+    @Value("${jinjiang.debug:false}")
     private Boolean debug;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @XxlJob("jingjiangSignIn")
+    @XxlJob("jinjiangSignIn")
     public void signInJob(){
         // 设置参数
         String jobParam = XxlJobHelper.getJobParam();
