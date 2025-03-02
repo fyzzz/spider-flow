@@ -27,7 +27,7 @@ public class CsdnJob extends AbstractJob{
     @Value("${csdn.headless:true}")
     private Boolean headless;
 
-    @XxlJob("liandiSignIn")
+    @XxlJob("csdnSignIn")
     public void signInJob(){
         logInfo("username: {}", username);
         logInfo("password: {}", password);
